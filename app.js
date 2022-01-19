@@ -199,7 +199,38 @@ MongoClient.connect(
 						}
 					}
 				);
-			});
+            });
+            
+            // Create a new order
+            app.post('/orders/add', (req, res) => {
+                const order = {
+                    user: req.body.user,
+                    card: req.body.card,
+                    quantity: req.body.quantity,
+                    address: req.body.address,
+                    total: req.body.total,
+                    date: req.body.date,
+                };
+                db.collection('orders').insertOne(order, (err, result) => {
+                    if (err) {
+                        res.send(err);
+                    } else {
+                        res.send(result);
+                    }
+                });
+            });
+            // Get all the orders
+            app.get('/orders', (req, res) => {
+                db.collection('orders')
+                    .find()
+                    .toArray((err, result) => {
+                        if (err) {
+                            res.send(err);
+                        } else {
+                            res.send(result);
+                        }
+                    });
+            });
 
 			app.listen(PORT, () => {
 				console.log(`Listening on ${PORT}`);
