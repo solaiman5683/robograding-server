@@ -4,6 +4,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const { ObjectId } = require('mongodb');
+const fileUpload = require('express-fileupload');
 
 // Dotenv Config
 require('dotenv').config();
@@ -18,12 +19,12 @@ const app = express();
 // This will let us get the data from a POST
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(fileUpload());
 
 // Configure the app to use cors
 app.use(cors());
 
 // Connect to the database
-
 
 // MongoDB connection
 MongoClient.connect(
@@ -145,10 +146,13 @@ MongoClient.connect(
 
 			// Add a manual CARD to the database
 			app.post('/cards/add', (req, res) => {
+				// console.log(req.body);
+				const encodedImage = req.files.image.data.toString('base64');
+				const image = Buffer.from(encodedImage, 'base64');
 				const card = {
 					name: req.body.name,
 					description: req.body.description,
-					image: req.body.image,
+					image: `data:image/png;base64,${image}`,
 					price: req.body.price,
 					quantity: req.body.quantity,
 				};
@@ -199,38 +203,41 @@ MongoClient.connect(
 						}
 					}
 				);
-            });
-            
-            // Create a new order
-            app.post('/orders/add', (req, res) => {
-                const order = {
-                    user: req.body.user,
-                    card: req.body.card,
-                    quantity: req.body.quantity,
-                    address: req.body.address,
-                    total: req.body.total,
-                    date: req.body.date,
-                };
-                db.collection('orders').insertOne(order, (err, result) => {
-                    if (err) {
-                        res.send(err);
-                    } else {
-                        res.send(result);
-                    }
-                });
-            });
-            // Get all the orders
-            app.get('/orders', (req, res) => {
-                db.collection('orders')
-                    .find()
-                    .toArray((err, result) => {
-                        if (err) {
-                            res.send(err);
-                        } else {
-                            res.send(result);
-                        }
-                    });
-            });
+			});
+
+			// Create a new order
+			app.post('/orders/add', (req, res) => {
+				const order = {
+					user: req.body.user,
+					card: req.body.card,
+					quantity: req.body.quantity,
+					address: req.body.address,
+					total: req.body.total,
+					date:
+						new Date().toLocaleDateString() +
+						' ' +
+						new Date().toLocaleTimeString(),
+				};
+				db.collection('orders').insertOne(order, (err, result) => {
+					if (err) {
+						res.send(err);
+					} else {
+						res.send(result);
+					}
+				});
+			});
+			// Get all the orders
+			app.get('/orders', (req, res) => {
+				db.collection('orders')
+					.find()
+					.toArray((err, result) => {
+						if (err) {
+							res.send(err);
+						} else {
+							res.send(result);
+						}
+					});
+			});
 
 			app.listen(PORT, () => {
 				console.log(`Listening on ${PORT}`);
