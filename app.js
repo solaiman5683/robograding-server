@@ -152,7 +152,7 @@ MongoClient.connect(
 				const card = {
 					name: req.body.name,
 					description: req.body.description,
-					image: `data:image/png;base64,${image}`,
+					image: image,
 					price: req.body.price,
 					quantity: req.body.quantity,
 				};
