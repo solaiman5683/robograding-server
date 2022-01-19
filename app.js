@@ -3,6 +3,7 @@ const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
+const { ObjectId } = require('mongodb');
 
 // Dotenv Config
 require('dotenv').config();
@@ -82,7 +83,67 @@ MongoClient.connect(
 						res.send(result);
 					}
 				});
-			});
+            });
+            
+            // Login a user 
+            app.post('/users/login', (req, res) => {
+                db.collection('users').findOne(
+                    { username: req.body.username },
+                    (err, result) => {
+                        if (err) {
+                            res.send(err);
+                        } else {
+                            if (result) {
+                                if (bcrypt.compareSync(req.body.password, result.password)) {
+                                    res.send(result);
+                                } else {
+                                    res.send('Incorrect password');
+                                }
+                            } else {
+                                res.send('User not found');
+                            }
+                        }
+                    }
+                );
+            });
+
+            // Update a user Password
+            app.put('/users/:id/update', (req, res) => {
+                // Check if the password is correct
+                db.collection('users').findOne(
+                    { _id: new ObjectId(req.params.id) },
+                    (err, result) => {
+                        if (err) {
+                            res.send(err);
+                        } else {
+                            if (result) {
+                                if (bcrypt.compareSync(req.body.password, result.password)) {
+                                    // Encript the new password
+                                    const newPassword = bcrypt.hashSync(req.body.newPassword, 10);
+                                    // Update the password
+                                    db.collection('users').updateOne(
+                                        { _id: new ObjectId(req.params.id) },
+                                        { $set: { password: newPassword } },
+                                        (err, result) => {
+                                            if (err) {
+                                                res.send(err);
+                                            } else {
+                                                res.send(result);
+                                            }
+                                        }
+                                    );
+                                } else {
+                                    res.send('Incorrect password');
+                                }
+                            } else {
+                                res.send('User not found');
+                            }
+                        }
+                    }
+                );
+            });
+
+
 
 			app.listen(PORT, () => {
 				console.log(`Listening on ${PORT}`);
